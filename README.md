@@ -1,38 +1,39 @@
-> > Learn how to stop before you run.
+> Learn how to stop before you run.
+>
 > Old Proverb.
 
-# disposables
+# disposables ![ci status](https://travis-ci.org/roman/disposables.svg?branch=master)
 
 A library inspired on Reactive Extension's Subscription/Disposable model.
 
 It facilitates the composition and management of cleanup actions on
-different components via a unique Interface/Protocol, allowing to
-implement reload strategies in a sane way. This library works
+different components via a single protocol, allowing to implement
+reload strategies in a straightforward manner. This library works
 perfectly in combination with
 [tools.namespace](https://github.com/clojure/tools.namespace)
 
 ## Rationale
 
-Most of times, whenever we create a component in our application we
-need to create and keep track of resources that are being loaded. For
-example a web application needs to deal with the cleanup of a Socket
-and probably a DB connection.
+Most of times, whenever we initialize a component in our application
+we need to create and keep track of resources. For example a web
+application needs to deal with the cleanup of a Socket and probably a
+DB connection.
 
-In an ideal scenario, every one of this resources is managed by a
-smaller component, say for example you have an application that
-manages a XMPP connection and a WebServer. Each of this should be
-managed by different components and your main application should just
-compose them together. Disposables allow you to make this job easier
-by allowing both the XMPP component and the WebServer component return
-a cleanup record that talk in the same terms.
+In an ideal scenario, every one of this resources is managed by the
+component itself; say for example you have an application that manages
+a XMPP connection and a WebServer. Each of this responsibilities
+should be managed by a smaller sub-component and your main application
+should just compose them together. Disposables allow you to make this
+job easier by providing an API for resource cleanup of both the XMPP
+component and the WebServer sub-components.
 
 ### Naive Approach
 
 A lot of libraries ([http-kit](http://www.http-kit.org/) being one of
 them) provide a cleanup function that is returned whenever a new
-server is started. This work in a lot of cases, but if you want to
-replicate this behavior with all your different components, you have
-to:
+resource is allocated. This does the job in a lot of cases, but if you
+want to replicate this behavior with all your different
+sub-components, you have to:
 
 1) Ensure that the side-effect of the cleanup function is idempotent
    (won't do crazy stuff if you run it more than once)
@@ -42,6 +43,8 @@ to:
 
 3) Keep a trace (either via logging, println, etc). That shows
    which dispose functions are being called.
+
+Disposables provides a simple API that manages all of that.
 
 ### Getting Started with disposable
 
