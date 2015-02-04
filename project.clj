@@ -1,4 +1,4 @@
-(defproject org.van-clj/disposables "0.0.0-SNAPSHOT"
+(defproject org.van-clj/disposables "0.0.1"
   :description "Composable resource cleanup API"
   :url "https://github.com/unbounce/disposables"
   :license {:name "Eclipse Public License"
