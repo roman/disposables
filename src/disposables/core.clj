@@ -30,6 +30,9 @@
   (verbose-dispose disposable)
   nil)
 
+(defn merge-disposable [disposable & other]
+  (reduce mappend disposable other))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Disposable API
 
