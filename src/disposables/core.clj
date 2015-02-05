@@ -43,8 +43,8 @@
         (if @dispose-result
           @dispose-result
           (try
-            (action)
-            (reset! dispose-result [desc true])
+            (when (compare-and-set! dispose-result nil [desc true])
+              (action))
             (catch Exception e
               (reset! dispose-result [desc e])))))])))
 
@@ -66,9 +66,8 @@
 (deftype SingleAssignmentDisposable [disposable-atom]
   ISetDisposable
   (set-disposable [_ inner-disposable]
-    (if @disposable-atom
-      (throw sad-double-assignment-error)
-      (reset! disposable-atom inner-disposable)))
+    (when-not (compare-and-set! disposable-atom nil inner-disposable)
+      (throw sad-double-assignment-error)))
 
   IDisposable
   (verbose-dispose [_]
@@ -90,10 +89,8 @@
 (deftype SerialDisposable [disposable-atom]
   ISetDisposable
   (set-disposable [_ inner-disposable]
-    (if @disposable-atom
-      (do (dispose @disposable-atom)
-          (reset! disposable-atom inner-disposable))
-      (reset! disposable-atom inner-disposable)))
+    (when @disposable-atom (dispose @disposable-atom))
+    (reset! disposable-atom inner-disposable))
 
   IDisposable
   (verbose-dispose [_]
