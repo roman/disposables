@@ -142,10 +142,11 @@ sub-components, shutting down and cleaning everything just before we
 start a new server again after a call to `refresh`.
 
 `verbose-dispose` prints the outcome of each dispose action, if the
-disposable was successful, it is going to return the disposable
-description and true, otherwise it is going to return the description
-and the exception that happened. You can log this outcome for
-tracing/debugging purposes.
+disposable was successful, it is going to return a map with the
+disposable description and a status that indicates if the dispose
+action succeeded or failed, in case of failure you may access the
+exception as well. You can use this result for tracing/debugging
+purposes.
 
 ## License
 
