@@ -12,12 +12,21 @@
 (defprotocol ISetDisposable
   (set-disposable [self other-disposable]))
 
+(defprotocol IToDisposable
+  (to-disposable [self]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Disposable API
+
 (deftype Disposable [dispose-actions]
   IDisposable
   (verbose-dispose [self]
     (->> dispose-actions
          (mapv (fn -dispose [dispose-action] (dispose-action)))
          flatten))
+
+  IToDisposable
+  (to-disposable [self] self)
 
   Semigroup
   (mappend [_ other]
@@ -73,6 +82,16 @@
     (when-not (compare-and-set! disposable-atom nil inner-disposable)
       (throw sad-double-assignment-error)))
 
+  IToDisposable
+  (to-disposable [self]
+    (if @disposable-atom
+      ;; when is set, this disposable is not
+      ;; going to change, so we just return it
+      @disposable-atom
+      ;; when is not set, we need to return whatever
+      ;; this dispose eventually will respond
+      (Disposable. [#(verbose-dispose self)] )))
+
   IDisposable
   (verbose-dispose [_]
     (if @disposable-atom
@@ -96,6 +115,10 @@
   (set-disposable [_ inner-disposable]
     (when @disposable-atom (dispose @disposable-atom))
     (reset! disposable-atom inner-disposable))
+
+  IToDisposable
+  (to-disposable [self]
+    (Disposable. [#(verbose-dispose self)]))
 
   IDisposable
   (verbose-dispose [_]

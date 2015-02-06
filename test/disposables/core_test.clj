@@ -87,3 +87,43 @@
         (set-disposable disposable d1)
         (set-disposable disposable d2)
         (is (= @acc 1))))))
+
+(deftest mappend-and-to-disposable
+  (testing "allows to compose a filled single-assignment-disposable with a disposable"
+    (let [acc (atom 0)
+          d1  (new-disposable "acc-disposable-1" (swap! acc inc))
+          d2  (new-disposable "acc-disposable-2" (swap! acc inc))
+          d3  (new-single-assignment-disposable)
+          _   (set-disposable d3 d2)
+          disposable (mappend d1 (to-disposable d3))
+          result (verbose-dispose disposable)]
+      (is (= (count result) 2))
+      (is (= (nth result 0) {:description "acc-disposable-2" :status :succeed}))
+      (is (= (nth result 1) {:description "acc-disposable-1" :status :succeed}))))
+
+  (testing "allows to compose an empty single-assignment-disposable with a disposable"
+    (let [acc (atom 0)
+          d1  (new-disposable "acc-disposable-1" (swap! acc inc))
+          d2  (new-disposable "acc-disposable-2" (swap! acc inc))
+          d3  (new-single-assignment-disposable)
+          disposable (mappend d1 (to-disposable d3))
+          _   (set-disposable d3 d2)
+          result (verbose-dispose disposable)]
+      (is (= (count result) 2))
+      (is (= (nth result 0) {:description "acc-disposable-2" :status :succeed}))
+      (is (= (nth result 1) {:description "acc-disposable-1" :status :succeed}))))
+
+  (testing "allows to compose a serial-disposable with a disposable"
+    (let [acc (atom 0)
+          d1  (new-disposable "acc-disposable-1" (swap! acc inc))
+          d2  (new-disposable "acc-disposable-2" (swap! acc inc))
+          d3  (new-disposable "acc-disposable-3" (swap! acc inc))
+          sd  (new-serial-disposable)
+          _   (set-disposable sd d2)
+          disposable (mappend d1 (to-disposable sd))
+          _   (set-disposable sd d3)
+          result (verbose-dispose disposable)]
+
+      (is (= (count result) 2))
+      (is (= (nth result 0) {:description "acc-disposable-3" :status :succeed}))
+      (is (= (nth result 1) {:description "acc-disposable-1" :status :succeed})))))
