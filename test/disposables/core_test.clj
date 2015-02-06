@@ -17,7 +17,10 @@
       (let [exception (Exception. "EXCEPTION")
             disposable (new-disposable "test" (throw exception))
             result (verbose-dispose disposable)]
-        (is (= ["test" exception] (first result))
+        (is (= {:description "test"
+                :status :failed
+                :exception exception}
+               (first result))
             "err: verbose-dispose doesn't return error"))))
 
   (testing "mappend"
@@ -30,11 +33,13 @@
         (is (= (count result) 2)
             "err: disposable result count is different from merged ones")
 
-        (is (= ["test-2" exception]
-               (nth result 0))
+        (is (= {:description "test-2"
+                :status :failed
+                :exception exception})
             "err: disposables are not merged in reversed order")
 
-        (is (= ["test-1" true]
+        (is (= {:description "test-1"
+                :status :succeed}
                (nth result 1)))))))
 
 (deftest single-assignment-disposable
@@ -52,7 +57,7 @@
     (testing "fails when inner-disposable not present"
       (let [disposable (new-single-assignment-disposable)
             result (verbose-dispose disposable)]
-        (is (= sad-not-initialized-error
+        (is (= sad-not-initialized-error-value
                (first result))))))
 
   (testing "set-disposable"

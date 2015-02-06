@@ -15,8 +15,9 @@
 (deftype Disposable [dispose-actions]
   IDisposable
   (verbose-dispose [self]
-    (mapv (fn -dispose [dispose-action] (dispose-action))
-          dispose-actions))
+    (->> dispose-actions
+         (mapv (fn -dispose [dispose-action] (dispose-action)))
+         flatten))
 
   Semigroup
   (mappend [_ other]
@@ -33,20 +34,21 @@
 (defn merge-disposable [disposable & other]
   (reduce mappend disposable other))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Disposable API
-
 (defn new-disposable* [desc action]
   (let [dispose-result (atom nil)]
     (Disposable.
      [(fn -new-disposable []
-        (if @dispose-result
-          @dispose-result
+        (when-not @dispose-result
           (try
-            (when (compare-and-set! dispose-result nil [desc true])
+            (when (compare-and-set! dispose-result nil {:description desc
+                                                        :status :succeed})
               (action))
             (catch Exception e
-              (reset! dispose-result [desc e])))))])))
+              (reset! dispose-result
+                      {:description desc
+                       :status :failed
+                       :exception e}))))
+        @dispose-result)])))
 
 (defmacro new-disposable [desc & body]
   `(new-disposable* ~desc (fn -new-disposable-macro [] ~@body)))
@@ -56,9 +58,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Single Assignment Disposable API
 
-(def sad-not-initialized-error
-  ["SingleAssignmentDisposable"
-   (Exception. "SingleAssignmentDisposable was disposed without inner disposable")])
+(def sad-not-initialized-error-value
+  {:description "SingleAssignmentDisposable"
+   :status :failed
+   :exception (Exception. "SingleAssignmentDisposable was disposed without inner disposable")
+   })
 
 (def sad-double-assignment-error
   (Exception. "Double assignment on SingleAssignmentDisposable"))
@@ -73,7 +77,7 @@
   (verbose-dispose [_]
     (if @disposable-atom
       (verbose-dispose @disposable-atom)
-      [sad-not-initialized-error])))
+      [sad-not-initialized-error-value])))
 
 (defn new-single-assignment-disposable []
   (let [disposable-atom (atom nil)]
@@ -84,7 +88,8 @@
 ;; Serial Disposable API
 
 (def sd-empty-disposable-response
-  ["Empty SerialDisposable" true])
+  {:description "Empty SerialDisposable"
+   :status :succeed})
 
 (deftype SerialDisposable [disposable-atom]
   ISetDisposable
