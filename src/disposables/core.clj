@@ -36,12 +36,16 @@
              (.dispose-actions other)
              dispose-actions))))
 
+(def empty-disposable (Disposable. []))
+
 (defn dispose [disposable]
   (verbose-dispose disposable)
   nil)
 
-(defn merge-disposable [disposable & other]
-  (reduce mappend disposable other))
+(defn merge-disposables [disposable-list]
+  (reduce mappend
+          empty-disposable
+          disposable-list))
 
 (defn new-disposable* [desc action]
   (let [dispose-result (atom nil)]
@@ -61,8 +65,6 @@
 
 (defmacro new-disposable [desc & body]
   `(new-disposable* ~desc (fn -new-disposable-macro [] ~@body)))
-
-(def empty-disposable (Disposable. []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Single Assignment Disposable API

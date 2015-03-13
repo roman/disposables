@@ -28,7 +28,7 @@
       (let [exception (Exception. "EXCEPTION")
             d1 (new-disposable "test-1" (do nil))
             d2 (new-disposable "test-2" (throw exception))
-            disposable (reduce mappend empty-disposable [d1 d2])
+            disposable (merge-disposables [d1 d2])
             result (verbose-dispose disposable)]
         (is (= (count result) 2)
             "err: disposable result count is different from merged ones")
